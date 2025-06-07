@@ -82,53 +82,141 @@ export function CardDesigner({ onBack }: CardDesignerProps) {
   }
 
   const downloadDesign = () => {
-    // Create a printable version with UTF-8 encoding and custom design
+    // Create a printable version with UTF-8 encoding and custom design that matches preview exactly
     const printWindow = window.open("", "_blank")
     if (printWindow) {
       printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>CardTime Custom Card Design</title>
-          <style>
-            body { font-family: ${font}; margin: 20px; }
-            .card { 
-              width: 3.5in; 
-              height: 2in; 
-              border: ${borderWidth}px solid ${borderColor}; 
-              border-radius: ${borderRadius}px;
-              margin: 20px auto; 
-              page-break-after: always; 
-              background-color: ${cardBackground}; 
-              color: ${textColor}; 
-              font-family: ${font};
-              font-size: ${fontSize}px;
-              position: relative;
-              overflow: hidden;
-              ${backgroundImageUrl ? `background-image: url(${backgroundImageUrl}); background-size: cover;` : ""}
-              ${customCss}
-            }
-            .front, .back { padding: 10px; position: relative; height: calc(100% - 20px); }
-            .field { margin: 5px 0; border-bottom: 1px solid ${borderColor}; padding-bottom: 2px; }
-            .logo { max-height: 40px; max-width: 100px; margin-bottom: 10px; }
-            .qr { text-align: center; margin-top: 10px; }
-            .custom-design { width: 100%; height: 100%; object-fit: cover; }
-            @media print { body { margin: 0; } }
-          </style>
-        </head>
-        <body>
-          ${
-            frontDesignUrl
-              ? `
-            <div class="card">
-              <img src="${frontDesignUrl}" class="custom-design" alt="Front Design">
-            </div>
-          `
-              : `
-            <div class="card">
-              <div class="front">
-                ${logoUrl ? `<img src="${logoUrl}" class="logo" alt="Logo">` : ""}
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>CardTime Custom Card Design</title>
+        <style>
+          @page {
+            size: 3.5in 2in;
+            margin: 0;
+          }
+          
+          body { 
+            font-family: ${font}; 
+            margin: 0; 
+            padding: 0;
+            background: white;
+          }
+          
+          .card { 
+            width: 3.5in; 
+            height: 2in; 
+            border: ${borderWidth}px solid ${borderColor}; 
+            border-radius: ${borderRadius}px;
+            margin: 0;
+            page-break-after: always; 
+            background-color: ${cardBackground}; 
+            color: ${textColor}; 
+            font-family: ${font};
+            font-size: ${fontSize}px;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+            ${backgroundImageUrl ? `background-image: url(${backgroundImageUrl}); background-size: cover; background-position: center;` : ""}
+            ${customCss}
+          }
+          
+          .front, .back { 
+            padding: 10px; 
+            position: relative; 
+            height: calc(2in - 20px);
+            box-sizing: border-box;
+          }
+          
+          .logo {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            max-width: 60px;
+            max-height: 30px;
+            z-index: 10;
+          }
+          
+          .content {
+            position: relative;
+            z-index: 1;
+          }
+          
+          .front h3 {
+            font-weight: bold;
+            margin: 0 0 8px 0;
+            line-height: 1.2;
+            padding-right: ${logoUrl ? "70px" : "0"};
+          }
+          
+          .field { 
+            margin: 4px 0; 
+            border-bottom: 1px solid ${borderColor}; 
+            padding-bottom: 2px;
+            line-height: 1.3;
+            min-height: 16px;
+          }
+          
+          .back {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+          }
+          
+          .back h3 {
+            font-weight: bold;
+            margin: 0 0 8px 0;
+          }
+          
+          .qr { 
+            margin: 8px 0;
+          }
+          
+          .qr img {
+            width: 100px;
+            height: 100px;
+            display: block;
+          }
+          
+          .back p {
+            font-size: 8px;
+            margin: 4px 0 0 0;
+            opacity: 0.8;
+          }
+          
+          .custom-design { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+          }
+          
+          @media print { 
+            body { margin: 0; }
+            .card { margin: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        ${
+          frontDesignUrl
+            ? `
+          <!-- Front with custom design -->
+          <div class="card">
+            <img src="${frontDesignUrl}" class="custom-design" alt="Front Design">
+          </div>
+        `
+            : `
+          <!-- Front with form fields -->
+          <div class="card">
+            <div class="front">
+              ${logoUrl ? `<img src="${logoUrl}" class="logo" alt="Logo">` : ""}
+              <div class="content">
                 <h3>${businessName}</h3>
                 <div class="field">${t("date")}: ________________</div>
                 <div class="field">${t("time")}: ________________</div>
@@ -137,32 +225,36 @@ export function CardDesigner({ onBack }: CardDesignerProps) {
                 <div class="field">${t("deposit")}: _____________</div>
               </div>
             </div>
-          `
-          }
-          ${
-            backDesignUrl
-              ? `
-            <div class="card">
-              <img src="${backDesignUrl}" class="custom-design" alt="Back Design">
-            </div>
-          `
-              : `
-            <div class="card">
-              <div class="back" style="text-align: center;">
-                <h3>${t("scanQRCode")}</h3>
-                <div class="qr">
-                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                    window.location.origin + "?scan=true",
-                  )}" alt="QR Code" style="width: 120px; height: 120px;">
-                </div>
-                <p style="font-size: 10px; margin-top: 10px;">CardTime App</p>
+          </div>
+        `
+        }
+        
+        ${
+          backDesignUrl
+            ? `
+          <!-- Back with custom design -->
+          <div class="card">
+            <img src="${backDesignUrl}" class="custom-design" alt="Back Design">
+          </div>
+        `
+            : `
+          <!-- Back with QR code -->
+          <div class="card">
+            <div class="back">
+              <h3>${t("scanQRCode")}</h3>
+              <div class="qr">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                  window.location.origin + "?scan=true",
+                )}" alt="QR Code">
               </div>
+              <p>CardTime App</p>
             </div>
-          `
-          }
-        </body>
-        </html>
-      `)
+          </div>
+        `
+        }
+      </body>
+      </html>
+    `)
       printWindow.document.close()
       printWindow.print()
     }
@@ -247,6 +339,18 @@ export function CardDesigner({ onBack }: CardDesignerProps) {
                   {t("uploadLogo")}
                 </Button>
                 <input type="file" ref={logoInputRef} onChange={handleLogoUpload} accept="image/*" className="hidden" />
+                {logoUrl && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <img
+                      src={logoUrl || "/placeholder.svg"}
+                      alt="Logo"
+                      className="w-12 h-6 object-contain border rounded"
+                    />
+                    <Button variant="outline" size="sm" onClick={() => setLogoUrl("")}>
+                      Remove
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -265,6 +369,13 @@ export function CardDesigner({ onBack }: CardDesignerProps) {
                   accept="image/*"
                   className="hidden"
                 />
+                {backgroundImageUrl && (
+                  <div className="mt-2">
+                    <Button variant="outline" size="sm" onClick={() => setBackgroundImageUrl("")}>
+                      Remove Background
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -481,6 +592,7 @@ export function CardDesigner({ onBack }: CardDesignerProps) {
                 borderRadius: `${borderRadius}px`,
                 backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : "none",
                 backgroundSize: "cover",
+                backgroundPosition: "center",
               }}
             >
               {frontDesignUrl ? (
@@ -491,18 +603,77 @@ export function CardDesigner({ onBack }: CardDesignerProps) {
                 />
               ) : (
                 <>
+                  {/* Logo positioned absolutely in top-right */}
                   {logoUrl && (
-                    <img src={logoUrl || "/placeholder.svg"} alt="Logo" className="max-h-10 max-w-[100px] mb-2" />
+                    <img
+                      src={logoUrl || "/placeholder.svg"}
+                      alt="Logo"
+                      className="absolute top-2 right-2 max-w-[60px] max-h-[30px] object-contain z-10"
+                    />
                   )}
-                  <h3 className="font-bold mb-2">{businessName}</h3>
-                  <div className="space-y-1 text-sm">
-                    <div className="border-b border-gray-300 pb-1">{t("date")}: ________________</div>
-                    <div className="border-b border-gray-300 pb-1">{t("time")}: ________________</div>
-                    <div className="border-b border-gray-300 pb-1">{t("artist")}: ______________</div>
-                    <div className="border-b border-gray-300 pb-1">{t("size")}: ________________</div>
-                    <div className="border-b border-gray-300 pb-1">{t("deposit")}: _____________</div>
+
+                  {/* Content with proper spacing */}
+                  <div className="relative z-1">
+                    <h3 className="font-bold mb-2 leading-tight" style={{ paddingRight: logoUrl ? "70px" : "0" }}>
+                      {businessName}
+                    </h3>
+                    <div className="space-y-1 text-sm">
+                      <div className="border-b pb-0.5 min-h-[16px]" style={{ borderColor: borderColor }}>
+                        {t("date")}: ________________
+                      </div>
+                      <div className="border-b pb-0.5 min-h-[16px]" style={{ borderColor: borderColor }}>
+                        {t("time")}: ________________
+                      </div>
+                      <div className="border-b pb-0.5 min-h-[16px]" style={{ borderColor: borderColor }}>
+                        {t("artist")}: ______________
+                      </div>
+                      <div className="border-b pb-0.5 min-h-[16px]" style={{ borderColor: borderColor }}>
+                        {t("size")}: ________________
+                      </div>
+                      <div className="border-b pb-0.5 min-h-[16px]" style={{ borderColor: borderColor }}>
+                        {t("deposit")}: _____________
+                      </div>
+                    </div>
                   </div>
                 </>
+              )}
+            </div>
+
+            {/* Back of card preview */}
+            <div
+              className="border-2 rounded-lg p-4 relative overflow-hidden flex flex-col justify-center items-center text-center"
+              style={{
+                aspectRatio: "3.5/2",
+                backgroundColor: cardBackground,
+                color: textColor,
+                fontFamily: font,
+                fontSize: `${fontSize}px`,
+                borderColor: borderColor,
+                borderWidth: `${borderWidth}px`,
+                borderRadius: `${borderRadius}px`,
+                backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : "none",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            >
+              {backDesignUrl ? (
+                <img
+                  src={backDesignUrl || "/placeholder.svg"}
+                  alt="Back Design"
+                  className="w-full h-full object-cover absolute inset-0"
+                />
+              ) : (
+                <div className="relative z-10">
+                  <h3 className="font-bold mb-2">{t("scanQRCode")}</h3>
+                  <div className="mb-2">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + "?scan=true")}`}
+                      alt="QR Code"
+                      className="w-20 h-20 mx-auto block"
+                    />
+                  </div>
+                  <p className="text-xs opacity-80">CardTime App</p>
+                </div>
               )}
             </div>
           </div>
